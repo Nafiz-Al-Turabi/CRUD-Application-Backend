@@ -33,9 +33,63 @@ async function run() {
 
 
     const TaskCollection = client.db('application').collection('tasks');
+    // Add task 
+    app.post('/posttask', async (req, res) => {
+      const taskData = req.body;
+      try {
+        const result = await TaskCollection.insertOne(taskData);
+        res.send(result);
+      } catch (error) {
+        console.error('Error adding task:', error);
+        res.status(500).json('Failed to add task. Please try again.');
+      }
+    });
+    // get task from database
+    app.get('/tasks', async (req, res) => {
+      try {
+        const result = await TaskCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.error('Error getting task:', error);
+        res.status(500).json('Failed to get task. Please try again.');
+      }
+    });
 
+    // Delete Task
 
+    app.delete('/tasks/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const deleteQuery = { _id: new ObjectId(id) };
+        const result = await TaskCollection.deleteOne(deleteQuery)
+        res.send(result);
+      } catch (error) {
+        res.status(200).send('Failed to delete task')
+      }
+    });
 
+    // Update task
+
+    app.put('/tasks/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const updatedTask = req.body;
+    
+        const updateQuery = { _id: new ObjectId(id) };
+        const update = { $set: updatedTask };
+    
+        const result = await TaskCollection.updateOne(updateQuery, update);
+    
+        if (result.modifiedCount === 0) {
+          return res.status(404).send('Task not found');
+        }
+    
+        res.send('Task updated successfully');
+      } catch (error) {
+        console.error('Failed to update task:', error);
+        res.status(500).send('Failed to update task');
+      }
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
